@@ -28,7 +28,7 @@ def view():
             'user-agent': user_agent,
         }
 
-        response = requests.put('https://api.e-z.bio/bio/view/hvhh', headers=headers, proxies=proxies)
+        response = requests.put('https://api.e-z.bio/bio/view/ ur nick ', headers=headers, proxies=proxies)
         print(response.text)
     except Exception as e:
             pass
