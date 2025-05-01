@@ -1,41 +1,49 @@
-import requests,threading,random
-from fake_useragent import UserAgent
+import random,threading
 
-ua = UserAgent()
-user_agent = ua.random
+from curl_cffi import requests
+from loguru import logger
 
-file = open('proxy.txt', 'r').read().splitlines()
-proxies = {
-    'http': f'{random.choice(file).__str__().strip()}',
-    'https': f'{random.choice(file).__str__().strip()}'
-}
+class EzBio:
+    def __init__(self):
+        self.session = requests.Session()
 
-def view():
-    try: 
-        headers = {
-            'authority': 'api.e-z.bio',
+        self.session.headers = {
             'accept': 'application/json, text/plain, */*',
-            'accept-language': 'pl-PL,pl;q=0.8',
+            'accept-language': 'pl-PL,pl;q=0.6',
             'origin': 'https://e-z.bio',
+            'priority': 'u=1, i',
             'referer': 'https://e-z.bio/',
-            'sec-ch-ua': '"Brave";v="119", "Chromium";v="119", "Not?A_Brand";v="24"',
+            'sec-ch-ua': '"Brave";v="135", "Not-A.Brand";v="8", "Chromium";v="135"',
             'sec-ch-ua-mobile': '?0',
             'sec-ch-ua-platform': '"Windows"',
             'sec-fetch-dest': 'empty',
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-site',
             'sec-gpc': '1',
-            'user-agent': user_agent,
+            'user-agent': f'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.{random.randint(1000, 4000)}.0 Safari/537.36'
         }
 
-        response = requests.put('https://api.e-z.bio/bio/view/ ur nick ', headers=headers, proxies=proxies)
-        print(response.text)
-    except Exception as e:
-            pass
-        
-def start():
-    while True:
-        view()
+    def send_views(self, username: str):
+        proxies = random.choice(open('proxy.txt').read().splitlines())
+        proxy = {   
+            'http': f'http://{proxies}',
+            'https': f'http://{proxies}',
+        }
 
-for i in range(30):
-    threading.Thread(target=start).start()
+        response = self.session.put(f'https://api.e-z.bio/bio/view/{username}', impersonate="edge101", proxies=proxy)
+        if not response.json()['success']:
+            logger.error('Failed to send view')
+            return
+        
+        logger.success(f'View sent successfully to {username}')
+
+    def start(self, username: str):
+        while True:
+            self.send_views(username)
+
+ezbio = EzBio()
+username = input('Enter username: ')
+threads = int(input('Enter number of threads: '))
+
+for _ in range(threads):
+    threading.Thread(target=ezbio.start, args=(username,)).start()
